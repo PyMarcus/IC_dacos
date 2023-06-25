@@ -6,12 +6,43 @@ use `tagman-extended`; -- tabelas mais populadas
 show tables;
 
 -- tabelas
-select * from method_metrics; 	-- id, cc, loc, pc, method_name, package_name, project_name, type_name
-select * from class_metrics; 	-- id, dit, fanin, fanout, lcom, loc, nc, nof, nom, nopf, nopm, wmc, package_name, project_name, type_name
+select * from method_metrics; 	        -- id, cc, loc, pc, method_name, package_name, project_name, type_name
+select * from class_metrics; 	        -- id, dit, fanin, fanout, lcom, loc, nc, nof, nom, nopf, nopm, wmc, package_name, project_name, type_name
 select * from sample; 			-- id, designite_id, has_smell, is_class, path_to_file, project_name, sample_constraints, smells
 select * from annotation;		-- id, iscm, isim, islp, isma, is_smell, sample_id
 select * from smell;  			-- vazia, mas, conteria nome dos smells, se são ou não design ou se há descrição .
 
+
+/* VER QUAL É SMELL DE FATO ----> USAR PARA SEPARAR */
+SELECT
+	sample.path_to_file AS path,
+    sample.project_name AS project,
+    sample.has_smell,
+    a.is_smell
+FROM 
+	sample 
+    LEFT JOIN annotation AS a ON sample.id = a.sample_id
+WHERE
+	 a.is_smell = 1
+     AND sample.has_smell = 1
+     AND sample.path_to_file not like '%Test%'
+     AND sample.path_to_file not like '%test%';
+     
+-- PROJETO COM MAIS SMELLS      
+SELECT
+    sample.path_to_file AS path,
+    sample.project_name AS project,
+    a.is_smell,
+    sample.has_smell
+FROM
+    sample
+    LEFT JOIN annotation AS a ON sample.id = a.sample_id
+WHERE
+    sample.has_smell = 1 
+    AND a.is_smell = 1
+    AND sample.project_name not like '%Test%'
+    AND sample.path_to_file not like '%test%'
+    AND sample.project_name = 'MovingBlocks_Terasology';
 
 
 /*IDENTIFICAÇÃO DE QUAL REPOSITORIO/PACOTE TEM MAIS SMELLS COM > 13 LINHAS DE CODIGO E cc = 30 (MUITO RUINS) */
@@ -36,13 +67,13 @@ FROM
     JOIN class_metrics AS cm ON cm.project_name = sample.project_name
     JOIN method_metrics AS mm ON mm.project_name = cm.project_name
 WHERE
-    cm.loc > 13
-    AND mm.loc > 13
-    AND mm.cc = 30
-    AND sample.has_smell = 1;
+    -- cm.loc > 13
+    -- AND mm.loc > 13
+    -- AND mm.cc = 30
+     sample.has_smell = 1;
 
 
-/*PROJETO COM MAIS SMELLS*/
+/*PROJETO COM MAIS SMELLS (TOTAL DE 1250)*/
 SELECT
     sample.path_to_file AS path,
     sample.project_name AS project,
@@ -87,10 +118,7 @@ order by cm.loc desc limit 1;
 /*CODIGOS COM SMELLS*/
 SELECT
     sample.path_to_file AS path,
-    sample.project_name AS project,
-    cm.package_name AS package,
-    mm.method_name AS method
+    sample.project_name AS project
 FROM
     sample
-    JOIN class_metrics AS cm ON cm.project_name = sample.project_name and sample.has_smell = 1
-    JOIN method_metrics AS mm ON mm.project_name = cm.project_name;
+WHERE sample.has_smell = 1;
